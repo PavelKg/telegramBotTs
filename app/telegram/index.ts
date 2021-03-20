@@ -12,6 +12,7 @@ module.exports = async function (fastify, opts) {
       fastify: ['TelegramService']
     }
   }
+  
   async function messHandler(req, reply) {
     await this.telegramService.handleUpdate(req, reply)
     reply.code(200).send()

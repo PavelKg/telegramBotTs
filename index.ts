@@ -1,17 +1,23 @@
-import fastify from 'fastify'
-import Telegraf from 'telegraf'
+import fastify, {FastifyInstance, FastifyLoggerInstance} from 'fastify'
+import {Server, IncomingMessage, ServerResponse} from 'http'
 
-const server = fastify()
-
+import {PORT} from './app/utils/config'
 import app from './app'
 
-fastify().register(app)
-
-server.get('/ping', async (request, reply) => {
-  return 'pong\n'
+const server: FastifyInstance<
+  Server,
+  IncomingMessage,
+  ServerResponse,
+  FastifyLoggerInstance
+> = fastify({
+  logger: true,
+  ignoreTrailingSlash: true,
+  bodyLimit: 7291456
 })
 
-server.listen(8081, (err, address) => {
+server.register(app).then(() => {})
+
+server.listen(PORT || 8765, (err, address) => {
   if (err) {
     console.error(err)
     process.exit(1)
