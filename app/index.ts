@@ -1,7 +1,9 @@
 'use strict'
 import fp from 'fastify-plugin'
-import {FastifyInstance} from 'fastify'
-import {amqpClient, Producer} from './amqp'
+import {FastifyInstance, FastifyPluginOptions} from 'fastify'
+import {Producer} from './amqp/types/ampqclient'
+import {amqpClient} from './amqp'
+
 import * as config from '../app/utils/config'
 import WorkerService from './workerservice/service'
 import Worker from './workerservice'
@@ -43,7 +45,7 @@ const secretpath: string = crypto
 
 async function connectToAMQP(
   fastify: FastifyInstance,
-  opts: any,
+  opts: FastifyPluginOptions,
   done: Function
 ) {
   const {
@@ -66,7 +68,11 @@ async function connectToAMQP(
   }
 }
 
-async function decorateFastifyInstance(fastify: FastifyInstance, opts, done) {
+async function decorateFastifyInstance(
+  fastify: any,
+  opts: FastifyPluginOptions,
+  done: Function
+) {
   console.log('Decorate Is Loading...')
   fastify.decorate('telegramService', (a: number, b: number) => a + b)
 
@@ -79,7 +85,7 @@ async function decorateFastifyInstance(fastify: FastifyInstance, opts, done) {
     durable: true,
     persistent: false
   })
-  publisher.send('aaabbb').then((res) => {
+  publisher.send('aaabbb').then((res: boolean) => {
     console.log(res)
   })
 
@@ -94,7 +100,11 @@ async function decorateFastifyInstance(fastify: FastifyInstance, opts, done) {
   console.log('Decorate Loaded.', Object.keys(fastify))
 }
 
-export default async function (fastify: FastifyInstance, opts, done) {
+export default async function (
+  fastify: FastifyInstance,
+  opts: FastifyPluginOptions,
+  done: Function
+) {
   await fastify
     .register(fp(connectToAMQP))
 

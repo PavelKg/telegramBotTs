@@ -8,7 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsnd --respawn --transpile-only index.ts",
     "start": "node ./build/index.js",
-    "compile-schemas": "json2ts -i ./app/workerservice/schemas -o types"
+    "compile-schemas": "json2ts -i ./app/workerservice/schemas -o types",
+    "check": "tsc --traceResolution"
   },
   "author": "",
   "license": "ISC",

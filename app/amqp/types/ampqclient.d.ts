@@ -1,10 +1,11 @@
+/* tslint:disable */
 import {Channel, Connection} from 'amqplib'
 
 export interface ServerOpts {
-  host: string | undefined 
-  port: string | undefined 
-  user: string | undefined 
-  password: string | undefined 
+  host: string | undefined
+  port: string | undefined
+  user: string | undefined
+  password: string | undefined
 }
 
 export interface Conn {
@@ -27,4 +28,8 @@ export interface PubOpts {
 export interface Producer {
   send: Function
   stop: Function
+}
+
+export interface Test {
+  a: string
 }

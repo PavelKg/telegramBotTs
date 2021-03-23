@@ -1,5 +1,12 @@
-import amqp, {Channel, Connection} from 'amqplib'
-import {ServerOpts, Conn, PubOpts, Producer, QueueOpt} from './ampqclient'
+import amqp from 'amqplib'
+import {
+  Producer,
+  ServerOpts,
+  Conn,
+  QueueOpt,
+  PubOpts
+} from './types/ampqclient'
+
 class amqpClient {
   connections: Array<Conn> = []
   server: ServerOpts
@@ -69,4 +76,4 @@ class amqpClient {
   }
 }
 
-export {Producer, amqpClient}
+export {amqpClient}
