@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsnd --respawn --transpile-only index.ts",
     "start": "node ./build/index.js",
-    "compile-schemas": "json2ts -i ./app/workerservice/schemas -o types",
+    "compile-schemas": "json2ts -i ./app/workerservice/schemas -o ./app/workerservice/schemas/types",
     "check": "tsc --traceResolution"
   },
   "author": "",
@@ -20,7 +20,7 @@
     "fastify": "^3.12.0",
     "fastify-cors": "^5.2.0",
     "fastify-plugin": "^3.0.0",
-    "telegraf": "^4.0.3",
+    "telegraf": "^4.3.0",
     "ts-node-dev": "^1.1.1",
     "typescript": "^4.1.5"
   },

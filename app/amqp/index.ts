@@ -1,10 +1,11 @@
 import amqp from 'amqplib'
+import EventEmitter from 'events'
 import {
   Producer,
   ServerOpts,
   Conn,
   QueueOpt,
-  PubOpts
+  PublisherOpts
 } from './types/ampqclient'
 
 class amqpClient {
@@ -19,6 +20,7 @@ class amqpClient {
   info() {
     return {connCount: this.connections.length}
   }
+
   async close() {
     this.connections.forEach((conn) => {
       conn.connection?.close()
@@ -27,23 +29,30 @@ class amqpClient {
 
   async createConn(): Promise<Conn> {
     const {host, port, user, password} = this.server
+    let conn: Conn = {connection: undefined, channel: undefined}
     try {
       const connection = await amqp.connect(
         `amqp://${user}:${password}@${host}:${port}/`
       )
-      const channel = await connection.createChannel()
-      const conn: Conn = {connection, channel}
-      this.connections.push(conn)
-      return conn
+      if (connection) {
+        const channel = await connection.createChannel()
+        conn = {...conn, connection, channel}
+        process.once('SIGINT', function () {
+          connection.close()
+        })
+        this.connections.push(conn)
+      }
     } catch (err) {
       console.log(err)
       throw err
     }
+    return conn
   }
 
-  async createPublisher(queue: string, opts: PubOpts): Promise<Producer> {
+  async createPublisher(queue: string, opts: PublisherOpts): Promise<Producer> {
     try {
       const conn = await this.createConn()
+
       const {durable = true, persistent = false} = opts
 
       if (!conn.channel) {
@@ -70,9 +79,35 @@ class amqpClient {
       throw err
     }
   }
-  async runConsumerForService(opts: QueueOpt, serviceCb: Function) {
-    const {queue, isNoAck = false, durable = false, prefetch = false} = opts
-    //await this.conns.consumer.channel?.assertQueue(queue, {durable})
+  async runConsumerForService(
+    opts: QueueOpt,
+    serviceCb: Function
+  ): Promise<boolean> {
+    const {queue, isNoAck = false, durable = false} = opts
+    let consumeEmitter: EventEmitter
+    try {
+      const conn = await this.createConn()
+      if (!conn.channel) {
+        throw 'Channel is down'
+      } else {
+        await conn.channel.assertQueue(queue, {durable})
+
+        conn.channel.consume(
+          queue,
+          (message) => {
+            if (message !== null) {
+              serviceCb(message.content.toString())
+            } else {
+              throw 'NullMessageException'
+            }
+          },
+          {noAck: isNoAck}
+        )
+      }
+    } catch (error) {
+      throw error
+    }
+    return Promise.resolve(true)
   }
 }
 

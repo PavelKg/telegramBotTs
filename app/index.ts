@@ -1,25 +1,19 @@
 'use strict'
 import fp from 'fastify-plugin'
+import cors from 'fastify-cors'
+import crypto from 'crypto'
+import * as config from '../app/utils/config'
 import {FastifyInstance, FastifyPluginOptions} from 'fastify'
+
 import {Producer} from './amqp/types/ampqclient'
 import {amqpClient} from './amqp'
 
-import * as config from '../app/utils/config'
 import WorkerService from './workerservice/service'
 import Worker from './workerservice'
 
-import cors from 'fastify-cors'
-import crypto from 'crypto'
-
-import Telegraf from 'telegraf'
-//const config = require('./config')
+import {Telegraf, Context} from 'telegraf'
 import Telegram from './telegram'
-import {doesNotMatch} from 'node:assert'
-import {Interface} from 'node:readline'
-
-// const TelegramService = require('./telegram/service')
-
-// const RabbitService = require('./rabbitmq/service')
+import TelegramService from './telegram/service'
 
 // secretpath generate
 const current_date: string = new Date().valueOf().toString()
@@ -29,19 +23,31 @@ const secretpath: string = crypto
   .update(current_date + random)
   .digest('hex')
 
-// async function initTelegramBot(fastify) {
-//   console.log('TeleBot init...')
+async function initTelegramBot(fastify: FastifyInstance) {
+  console.log('TeleBot init...')
+  // Telegram bot
+  const {
+    TELE_BOT_NAME: name,
+    TELE_BOT_DOMAIN: domain,
+    TELE_BOT_TOKEN: token,
+    TELE_BOT_MODE: mode
+  } = config
 
-//   // Telegram bot
-//   const botSettings = config.botList[config.botName]
-//   const webHookPath = `https://${config.domen}/${secretpath}`
+  if (token) {
+    const bot = new Telegraf<Context>(token)
+    process.once('SIGINT', () => bot.stop('SIGINT'))
+    process.once('SIGTERM', () => bot.stop('SIGTERM'))
+    const opts: Telegraf.LaunchOptions = {}
 
-//   const bot = new Telegraf(botSettings)
-//   bot.telegram.setWebhook(webHookPath)
-
-//   fastify.decorate(`telebot`, bot)
-//   console.log(`TeleBot ${config.botName} activated.`)
-// }
+    if (mode === 'webhook') {
+      const hookPath = `/${secretpath}`
+      opts.webhook = {domain, hookPath}
+    }
+    await bot.launch(opts)
+    fastify.decorate(`telebot`, bot)
+    console.log(`TeleBot ${name} lanched. Mode is ${mode}`)
+  }
+}
 
 async function connectToAMQP(
   fastify: FastifyInstance,
@@ -68,58 +74,46 @@ async function connectToAMQP(
   }
 }
 
-async function decorateFastifyInstance(
-  fastify: any,
-  opts: FastifyPluginOptions,
-  done: Function
-) {
+async function decorateFastifyInstance(fastify: any) {
+  const {QUEUE_TO_BOT: q_to_bot = '', QUEUE_TO_BACK: q_to_back = ''} = config
   console.log('Decorate Is Loading...')
-  fastify.decorate('telegramService', (a: number, b: number) => a + b)
 
   const amqpInst: amqpClient = fastify.amqp
-
   const workerService = new WorkerService(amqpInst)
   fastify.decorate('workerService', workerService)
 
-  const publisher: Producer = await amqpInst.createPublisher('bot_to_backend', {
+  const publisher: Producer = await amqpInst.createPublisher(q_to_back, {
     durable: true,
     persistent: false
   })
-  publisher.send('aaabbb').then((res: boolean) => {
-    console.log(res)
-  })
 
-  //const telebot = fastify.telebot
+  const telebot = fastify.telebot
+  const telegramService = new TelegramService(telebot, publisher)
+  const subscribeHandler = telegramService.subscribeToNotifications()
 
-  // const rabbitService = new RabbitService(amqpChannel, telebot)
-  // const telegramService = new TelegramService(telebot, rabbitService)
+  await amqpInst.runConsumerForService(
+    {queue: q_to_bot, isNoAck: true},
+    subscribeHandler
+  )
 
-  // fastify.decorate('telegramService', telegramService)
-  // fastify.decorate('rabbitService', rabbitService)
-
-  console.log('Decorate Loaded.', Object.keys(fastify))
+  fastify.decorate('telegramService', telegramService)
+  console.log('Decorate Loaded.')
 }
 
-export default async function (
-  fastify: FastifyInstance,
-  opts: FastifyPluginOptions,
-  done: Function
-) {
+export default async function (fastify: FastifyInstance) {
   await fastify
     .register(fp(connectToAMQP))
-
-    //done()
-    //register(fp(initTelegramBot))
+    .register(fp(initTelegramBot))
     .register(fp(decorateFastifyInstance))
 
-    // .register(cors, {
-    //   origin: /[\.kg|:8769|:8080]$/,
-    //   path: '*',
-    //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    //   exposedHeaders: 'Location,Date'
-    // })
+    .register(cors, {
+      origin: /[\.kg|:8765]$/,
+      //path: '*',
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      exposedHeaders: 'Location,Date'
+    })
 
     // // APIs modules
-    // //.register(Rabbitmq)
     .register(Worker, {prefix: `/service`})
+    .register(Telegram, {prefix: `/${secretpath}`})
 }

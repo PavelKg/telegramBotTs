@@ -1,16 +1,7 @@
-import {
-  FastifyInstance,
-  FastifySchema,
-  FastifyRequest,
-  FastifyReply
-} from 'fastify'
+import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify'
 
 import {QuerystringSchema as QuerystringSchemaInterface} from './schemas/types/querystring'
-
-// interface IQuerystring {
-//   username: string
-//   password: string
-// }
+import QuerystringSchema from './schemas/querystring.json'
 
 interface Out {
   data: string
@@ -20,7 +11,15 @@ export default async function (fastify: FastifyInstance) {
   fastify.get<{
     Querystring: QuerystringSchemaInterface
     Reply: {200: {data: string}}
-  }>('/', getServices)
+  }>(
+    '/',
+    {
+      schema: {
+        querystring: QuerystringSchema
+      }
+    },
+    getServices
+  )
 }
 
 // module.exports[Symbol.for('plugin-meta')] = {

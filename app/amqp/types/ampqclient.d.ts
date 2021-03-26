@@ -20,7 +20,7 @@ export interface QueueOpt {
   prefetch?: boolean
 }
 
-export interface PubOpts {
+export interface PublisherOpts {
   durable?: boolean
   persistent?: boolean
 }
