@@ -1,4 +1,4 @@
-import {Producer} from '../amqp/types/ampqclient'
+import {Producer} from '../amqp/types/amqpclient'
 import {Telegraf, Context, Markup} from 'telegraf'
 import {FastifyRequest, FastifyReply} from 'fastify'
 import {Update} from 'typegram'

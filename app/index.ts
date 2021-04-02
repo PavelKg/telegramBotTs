@@ -5,7 +5,7 @@ import crypto from 'crypto'
 import * as config from '../app/utils/config'
 import {FastifyInstance, FastifyPluginOptions} from 'fastify'
 
-import {Producer} from './amqp/types/ampqclient'
+import {Producer} from './amqp/types/amqpclient'
 import {amqpClient} from './amqp'
 
 import WorkerService from './workerservice/service'
@@ -14,6 +14,13 @@ import Worker from './workerservice'
 import {Telegraf, Context} from 'telegraf'
 import Telegram from './telegram'
 import TelegramService from './telegram/service'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    amqp: amqpClient
+    telebot: Context
+  }
+}
 
 // secretpath generate
 const current_date: string = new Date().valueOf().toString()
@@ -74,7 +81,7 @@ async function connectToAMQP(
   }
 }
 
-async function decorateFastifyInstance(fastify: any) {
+async function decorateFastifyInstance(fastify: FastifyInstance) {
   const {QUEUE_TO_BOT: q_to_bot = '', QUEUE_TO_BACK: q_to_back = ''} = config
   console.log('Decorate Is Loading...')
 

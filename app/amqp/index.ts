@@ -6,7 +6,7 @@ import {
   Conn,
   QueueOpt,
   PublisherOpts
-} from './types/ampqclient'
+} from './types/amqpclient'
 
 class amqpClient {
   connections: Array<Conn> = []

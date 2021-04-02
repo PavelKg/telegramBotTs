@@ -1,4 +1,4 @@
-import { ServerOpts, Conn, PubOpts, Producer, QueueOpt } from '../../types/ampqclient';
+import { ServerOpts, Conn, PubOpts, Producer, QueueOpt } from '../../types/amqpclient';
 declare class amqpClient {
     connections: Array<Conn>;
     server: ServerOpts;
