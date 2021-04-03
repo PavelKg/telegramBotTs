@@ -5,7 +5,7 @@ import crypto from 'crypto'
 import * as config from '../app/utils/config'
 import {FastifyInstance, FastifyPluginOptions} from 'fastify'
 
-import {Producer} from './amqp/types/amqpclient'
+import {Producer} from './amqp/types/ampqclient'
 import {amqpClient} from './amqp'
 
 import WorkerService from './workerservice/service'

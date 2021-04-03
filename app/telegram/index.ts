@@ -34,5 +34,5 @@ async function messHandler(
 }
 async function testHandler(req: FastifyRequest, reply: FastifyReply) {
   console.log('telegram')
-  reply.code(200).send('Hello World!!!')
+  reply.code(200).send('Hello World !!!')
 }
