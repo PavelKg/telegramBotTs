@@ -83,7 +83,7 @@ class amqpClient {
     opts: QueueOpt,
     serviceCb: Function
   ): Promise<boolean> {
-    const {queue, isNoAck = false, durable = false} = opts
+    const {queue, isNoAck = false, durable = true} = opts
     let consumeEmitter: EventEmitter
     try {
       const conn = await this.createConn()
