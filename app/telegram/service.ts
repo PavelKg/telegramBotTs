@@ -1,6 +1,7 @@
 import {Producer} from '../amqp/types/amqpclient'
 import {Telegraf, Context, Markup} from 'telegraf'
 import {FastifyRequest, FastifyReply} from 'fastify'
+import {MenuTemplate, MenuMiddleware} from 'telegraf-inline-menu'
 import {Update} from 'typegram'
 
 export default class TelegramService {
@@ -14,11 +15,22 @@ export default class TelegramService {
   }
   init() {
     if (this.bot) {
-      this.bot.on('text', (ctx) => {
+      // this.bot.on('text', (ctx) => {
+      //   console.log(ctx.update.message)
+      //   ctx.reply('Hello World!!')
+      //   if (this.notifier) {
+      //     this.notifier.send(ctx.botInfo.first_name)
+      //   }
+      // })
+      this.bot.command('/video', (ctx) => {
         console.log(ctx.update.message)
-        ctx.reply('Hello World')
+        ctx.reply('video list')
         if (this.notifier) {
-          this.notifier.send(ctx.botInfo.first_name)
+          const chatId : number = ctx.update.message.chat.id
+          const type : string = 'get'
+          const content : object = { category : 'video', value:'list'}
+          const data : object = {chatId,type,content}
+          this.notifier.send(JSON.stringify(data))
         }
       })
     }
@@ -28,7 +40,13 @@ export default class TelegramService {
     const bot = this.bot
     return (msg: string) => {
       if (bot) {
-        bot.telegram.sendMessage(304230716, msg)
+        const {chatId,type,contentType,content} = JSON.parse(msg)
+        if(contentType==='pg-list'){
+          bot.telegram.sendMediaGroup(chatId,content)
+
+          // content.forEach(element =>  bot.telegram.sendMessage(chatId, element));
+        }
+       
         console.log(msg)
       }
     }
