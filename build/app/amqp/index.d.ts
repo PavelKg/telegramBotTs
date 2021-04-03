@@ -1,4 +1,4 @@
-import { ServerOpts, Conn, PubOpts, Producer, QueueOpt } from '../../types/amqpclient';
+import { Producer, ServerOpts, Conn, QueueOpt, PublisherOpts } from './types/amqpclient';
 declare class amqpClient {
     connections: Array<Conn>;
     server: ServerOpts;
@@ -9,7 +9,7 @@ declare class amqpClient {
     };
     close(): Promise<void>;
     createConn(): Promise<Conn>;
-    createPublisher(queue: string, opts: PubOpts): Promise<Producer>;
-    runConsumerForService(opts: QueueOpt, serviceCb: Function): Promise<void>;
+    createPublisher(queue: string, opts: PublisherOpts): Promise<Producer>;
+    runConsumerForService(opts: QueueOpt, serviceCb: Function): Promise<boolean>;
 }
-export { Producer, amqpClient };
+export { amqpClient };

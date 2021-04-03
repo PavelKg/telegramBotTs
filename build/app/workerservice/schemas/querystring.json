@@ -1,0 +1,7 @@
+{
+    "title": "Querystring Schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false,
+    "required": []
+}
