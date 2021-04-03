@@ -94,7 +94,7 @@ async function decorateFastifyInstance(fastify: FastifyInstance) {
     persistent: false
   })
 
-  const telebot = fastify.telebot
+  const telebot: any = fastify.telebot
   const telegramService = new TelegramService(telebot, publisher)
   const subscribeHandler = telegramService.subscribeToNotifications()
 

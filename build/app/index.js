@@ -32,13 +32,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fastify_plugin_1 = __importDefault(require("fastify-plugin"));
-const amqp_1 = require("./amqp");
+const fastify_cors_1 = __importDefault(require("fastify-cors"));
+const crypto_1 = __importDefault(require("crypto"));
 const config = __importStar(require("../app/utils/config"));
+const amqp_1 = require("./amqp");
 const service_1 = __importDefault(require("./workerservice/service"));
 const workerservice_1 = __importDefault(require("./workerservice"));
-const crypto_1 = __importDefault(require("crypto"));
-// const TelegramService = require('./telegram/service')
-// const RabbitService = require('./rabbitmq/service')
+const telegraf_1 = require("telegraf");
+const telegram_1 = __importDefault(require("./telegram"));
+const service_2 = __importDefault(require("./telegram/service"));
 // secretpath generate
 const current_date = new Date().valueOf().toString();
 const random = Math.random().toString();
@@ -46,16 +48,26 @@ const secretpath = crypto_1.default
     .createHash('sha1')
     .update(current_date + random)
     .digest('hex');
-// async function initTelegramBot(fastify) {
-//   console.log('TeleBot init...')
-//   // Telegram bot
-//   const botSettings = config.botList[config.botName]
-//   const webHookPath = `https://${config.domen}/${secretpath}`
-//   const bot = new Telegraf(botSettings)
-//   bot.telegram.setWebhook(webHookPath)
-//   fastify.decorate(`telebot`, bot)
-//   console.log(`TeleBot ${config.botName} activated.`)
-// }
+function initTelegramBot(fastify) {
+    return __awaiter(this, void 0, void 0, function* () {
+        console.log('TeleBot init...');
+        // Telegram bot
+        const { TELE_BOT_NAME: name, TELE_BOT_DOMAIN: domain, TELE_BOT_TOKEN: token, TELE_BOT_MODE: mode } = config;
+        if (token) {
+            const bot = new telegraf_1.Telegraf(token);
+            process.once('SIGINT', () => bot.stop('SIGINT'));
+            process.once('SIGTERM', () => bot.stop('SIGTERM'));
+            const opts = {};
+            if (mode === 'webhook') {
+                const hookPath = `/${secretpath}`;
+                opts.webhook = { domain, hookPath };
+            }
+            yield bot.launch(opts);
+            fastify.decorate(`telebot`, bot);
+            console.log(`TeleBot ${name} lanched. Mode is ${mode}`);
+        }
+    });
+}
 function connectToAMQP(fastify, opts, done) {
     return __awaiter(this, void 0, void 0, function* () {
         const { AMQP_USER: user, AMQP_PASS: password, AMQP_HOST: host, AMQP_PORT: port } = config;
@@ -73,44 +85,40 @@ function connectToAMQP(fastify, opts, done) {
         }
     });
 }
-function decorateFastifyInstance(fastify, opts, done) {
+function decorateFastifyInstance(fastify) {
     return __awaiter(this, void 0, void 0, function* () {
+        const { QUEUE_TO_BOT: q_to_bot = '', QUEUE_TO_BACK: q_to_back = '' } = config;
         console.log('Decorate Is Loading...');
-        fastify.decorate('telegramService', (a, b) => a + b);
         const amqpInst = fastify.amqp;
         const workerService = new service_1.default(amqpInst);
         fastify.decorate('workerService', workerService);
-        const publisher = yield amqpInst.createPublisher('bot_to_backend', {
+        const publisher = yield amqpInst.createPublisher(q_to_back, {
             durable: true,
             persistent: false
         });
-        publisher.send('aaabbb').then((res) => {
-            console.log(res);
-        });
-        //const telebot = fastify.telebot
-        // const rabbitService = new RabbitService(amqpChannel, telebot)
-        // const telegramService = new TelegramService(telebot, rabbitService)
-        // fastify.decorate('telegramService', telegramService)
-        // fastify.decorate('rabbitService', rabbitService)
-        console.log('Decorate Loaded.', Object.keys(fastify));
+        const telebot = fastify.telebot;
+        const telegramService = new service_2.default(telebot, publisher);
+        const subscribeHandler = telegramService.subscribeToNotifications();
+        yield amqpInst.runConsumerForService({ queue: q_to_bot, isNoAck: true }, subscribeHandler);
+        fastify.decorate('telegramService', telegramService);
+        console.log('Decorate Loaded.');
     });
 }
-function default_1(fastify, opts, done) {
+function default_1(fastify) {
     return __awaiter(this, void 0, void 0, function* () {
         yield fastify
             .register(fastify_plugin_1.default(connectToAMQP))
-            //done()
-            //register(fp(initTelegramBot))
+            .register(fastify_plugin_1.default(initTelegramBot))
             .register(fastify_plugin_1.default(decorateFastifyInstance))
-            // .register(cors, {
-            //   origin: /[\.kg|:8769|:8080]$/,
-            //   path: '*',
-            //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-            //   exposedHeaders: 'Location,Date'
-            // })
+            .register(fastify_cors_1.default, {
+            origin: /[\.kg|:8765]$/,
+            //path: '*',
+            methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+            exposedHeaders: 'Location,Date'
+        })
             // // APIs modules
-            // //.register(Rabbitmq)
-            .register(workerservice_1.default, { prefix: `/service` });
+            .register(workerservice_1.default, { prefix: `/service` })
+            .register(telegram_1.default, { prefix: `/${secretpath}` });
     });
 }
 exports.default = default_1;

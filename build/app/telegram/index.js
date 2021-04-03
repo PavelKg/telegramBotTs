@@ -33,7 +33,7 @@ function messHandler(req, reply) {
 }
 function testHandler(req, reply) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(req);
+        console.log('telegram');
         reply.code(200).send('Hello World!!!');
     });
 }

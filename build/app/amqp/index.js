@@ -34,17 +34,23 @@ class amqpClient {
     createConn() {
         return __awaiter(this, void 0, void 0, function* () {
             const { host, port, user, password } = this.server;
+            let conn = { connection: undefined, channel: undefined };
             try {
                 const connection = yield amqplib_1.default.connect(`amqp://${user}:${password}@${host}:${port}/`);
-                const channel = yield connection.createChannel();
-                const conn = { connection, channel };
-                this.connections.push(conn);
-                return conn;
+                if (connection) {
+                    const channel = yield connection.createChannel();
+                    conn = Object.assign(Object.assign({}, conn), { connection, channel });
+                    process.once('SIGINT', function () {
+                        connection.close();
+                    });
+                    this.connections.push(conn);
+                }
             }
             catch (err) {
                 console.log(err);
                 throw err;
             }
+            return conn;
         });
     }
     createPublisher(queue, opts) {
@@ -83,8 +89,29 @@ class amqpClient {
     }
     runConsumerForService(opts, serviceCb) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { queue, isNoAck = false, durable = false, prefetch = false } = opts;
-            //await this.conns.consumer.channel?.assertQueue(queue, {durable})
+            const { queue, isNoAck = false, durable = false } = opts;
+            let consumeEmitter;
+            try {
+                const conn = yield this.createConn();
+                if (!conn.channel) {
+                    throw 'Channel is down';
+                }
+                else {
+                    yield conn.channel.assertQueue(queue, { durable });
+                    conn.channel.consume(queue, (message) => {
+                        if (message !== null) {
+                            serviceCb(message.content.toString());
+                        }
+                        else {
+                            throw 'NullMessageException';
+                        }
+                    }, { noAck: isNoAck });
+                }
+            }
+            catch (error) {
+                throw error;
+            }
+            return Promise.resolve(true);
         });
     }
 }

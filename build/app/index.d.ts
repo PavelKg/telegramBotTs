@@ -1,2 +1,10 @@
-import { FastifyInstance, FastifyPluginOptions } from 'fastify';
-export default function (fastify: FastifyInstance, opts: FastifyPluginOptions, done: Function): Promise<void>;
+import { FastifyInstance } from 'fastify';
+import { amqpClient } from './amqp';
+import { Context } from 'telegraf';
+declare module 'fastify' {
+    interface FastifyInstance {
+        amqp: amqpClient;
+        telebot: Context;
+    }
+}
+export default function (fastify: FastifyInstance): Promise<void>;

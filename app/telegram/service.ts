@@ -35,7 +35,7 @@ export default class TelegramService {
   }
 
   async handleUpdate(req: FastifyRequest, reply: FastifyReply) {
-     const body: Update = req.body
+    const body: any = req.body
     if (this.bot) {
       this.bot.handleUpdate(body)
     }
