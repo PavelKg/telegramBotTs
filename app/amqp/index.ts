@@ -53,13 +53,13 @@ class amqpClient {
     try {
       const conn = await this.createConn()
 
-      const {durable = true, persistent = false} = opts
+      const {/*durable = true,*/ persistent = false} = opts
 
       if (!conn.channel) {
         throw "Channel wasn't created"
       }
 
-      await conn.channel.assertQueue(queue, {durable})
+      await conn.channel.assertQueue(queue, {})
       const produce: Producer = {
         send: async function (message: string) {
           if (!conn.channel) {

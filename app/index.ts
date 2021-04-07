@@ -11,9 +11,10 @@ import {amqpClient} from './amqp'
 import WorkerService from './workerservice/service'
 import Worker from './workerservice'
 
-import {Telegraf, Context} from 'telegraf'
+import {Telegraf, Context, Scenes} from 'telegraf'
 import Telegram from './telegram'
 import TelegramService from './telegram/service'
+import {botContext} from './telegram/types/telebot'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -22,7 +23,9 @@ declare module 'fastify' {
   }
 }
 
+type BaseBotContext = Context & Scenes.SceneContext
 // secretpath generate
+
 const current_date: string = new Date().valueOf().toString()
 const random: string = Math.random().toString()
 const secretpath: string = crypto
@@ -41,18 +44,16 @@ async function initTelegramBot(fastify: FastifyInstance) {
   } = config
 
   if (token) {
-    const bot = new Telegraf<Context>(token)
-    process.once('SIGINT', () => bot.stop('SIGINT'))
-    process.once('SIGTERM', () => bot.stop('SIGTERM'))
-    const opts: Telegraf.LaunchOptions = {}
+    const bot = new Telegraf<botContext>(token)
 
     if (mode === 'webhook') {
-      const hookPath = `/${secretpath}`
-      opts.webhook = {domain, hookPath}
+      await bot.telegram.setWebhook(`${domain}/${secretpath}`)
     }
-    await bot.launch(opts)
+
     fastify.decorate(`telebot`, bot)
-    console.log(`TeleBot ${name} lanched. Mode is ${mode}`)
+    process.once('SIGINT', () => bot.stop('SIGINT'))
+    process.once('SIGTERM', () => bot.stop('SIGTERM'))
+    console.log(`TeleBot ${name} created. Mode is ${mode}`)
   }
 }
 
@@ -90,7 +91,6 @@ async function decorateFastifyInstance(fastify: FastifyInstance) {
   fastify.decorate('workerService', workerService)
 
   const publisher: Producer = await amqpInst.createPublisher(q_to_back, {
-    durable: true,
     persistent: false
   })
 
