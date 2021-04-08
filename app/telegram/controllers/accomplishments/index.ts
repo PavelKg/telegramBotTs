@@ -1,70 +1,74 @@
 import {Context, Scenes, Markup, Composer} from 'telegraf'
 import {botContext} from '../../types/telebot'
-import {getMainKeyboard, getBackKeyboard} from "../../utils/keyboards"
+import {getMainKeyboard, getBackKeyboard} from '../../utils/keyboards'
+import {courses, Courses} from '../helper'
 
 const {enter, leave} = Scenes.Stage
+const sceneName = 'accomplishments'
 
-const accomplishmentsScene = new Scenes.BaseScene<botContext>('accomplishments')
+const iscene = new Scenes.BaseScene<botContext>(sceneName)
 
-accomplishmentsScene.enter((ctx) => {
+iscene.enter(async (ctx) => {
   const backKeyboard = getBackKeyboard()
-  ctx.reply('Back', backKeyboard.backKeyboard)
+  const complited = courses.finished_courses.list.map((item) => {
+    return Markup.button.callback(
+      `✅ ${item.title}: Grade Achieved: 100%`,
+      `finished_courses_${item.title}`
+    )
+  })
+
+  const in_progress = courses.current_courses.list.map((item) => {
+    return Markup.button.callback(
+      `🔄 ${item.title}: Grade Achieved: ${Math.round(Math.random() * 80)}%`,
+      `current_courses_${item.title}`
+    )
+  })
+
+  await ctx.replyWithHTML(
+    `Complited:`,
+    Markup.inlineKeyboard(complited, {columns: 1})
+  )
+  await ctx.replyWithHTML(
+    `In progress:`,
+    Markup.inlineKeyboard(in_progress, {columns: 1})
+  )
+
+  ctx.reply('\u2063', backKeyboard.backKeyboard)
 })
-accomplishmentsScene.leave((ctx) => {
+
+iscene.action(/finished_courses_|current_courses_/, async (ctx) => {
+  const selCourses = ctx.match[0].replace(/_$/, '')
+  const courses_list = courses[selCourses as keyof Courses].list
+  const reg = new RegExp(`${ctx.match[0]}(.*)`)
+  const coursesName = reg.exec(ctx.match.input) ?? ['', '']
+  const ct = courses_list.find((item) => item.title === coursesName[1])
+  let textMess = '\u2063'
+  if (ct && ct.sections) {
+    ct.sections.forEach((sec) => {
+      textMess += `
+<b>${sec.name}</b>
+
+`
+      sec.modules?.forEach((mod) => {
+        textMess += `<b>${mod.title}</b>: ${mod.value} | ${mod.rate}%
+`
+      })
+    })
+  }
+  console.log(textMess)
+  //const sections= courses_list.find(item=> item.title)
+
+  await ctx.replyWithHTML(textMess)
+
+  return ctx.answerCbQuery(`Oh, ${ctx.match[0]}! Great choice`)
+})
+
+iscene.leave((ctx) => {
   const menuKeyboard = getMainKeyboard()
   ctx.reply('Main menu', menuKeyboard.menuKeyboard)
 })
 
-accomplishmentsScene.command('saveme', leave<botContext>())
-accomplishmentsScene.hears('back', leave<botContext>())
+iscene.command('saveme', leave<botContext>())
+iscene.hears(/back/, leave<botContext>())
 
-
-
-export default accomplishmentsScene
-
-// // const {
-// //   languageSettingsAction,
-// //   languageChangeAction,
-// //   accountSummaryAction,
-// //   closeAccountSummaryAction
-// // } = require('./actions')
-
-// const {getMainKeyboard, getBackKeyboard} = require('../../utils/keyboards')
-// const {
-//   getMainKeyboard: getSettingsMainKeyboard,
-//   sendMessageToBeDeletedLater
-// } = require('./helpers')
-// const {deleteFromSession} = require('../../utils/session')
-// const {leave} = Stage
-
-// settings.enter(async (ctx) => {
-//   logger.debug(ctx, 'Enters settings scene')
-//   const {backKeyboard} = getBackKeyboard(ctx)
-
-//   deleteFromSession(ctx, 'settingsScene')
-//   await sendMessageToBeDeletedLater(
-//     ctx,
-//     ctx.i18n.t('scenes.settings.what_to_change'),
-//     getSettingsMainKeyboard(ctx)
-//   )
-//   await sendMessageToBeDeletedLater(
-//     ctx,
-//     ctx.i18n.t('scenes.settings.settings'),
-//     backKeyboard
-//   )
-// })
-
-// settings.leave(async (ctx) => {
-//   logger.debug(ctx, 'Leaves settings scene')
-//   const {mainKeyboard} = getMainKeyboard(ctx)
-//   await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard)
-//   deleteFromSession(ctx, 'settingsScene')
-// })
-
-// settings.command('saveme', leave())
-// settings.hears(match('keyboards.back_keyboard.back'), leave())
-
-// settings.action(/languageSettings/, languageSettingsAction)
-// settings.action(/languageChange/, languageChangeAction)
-// settings.action(/accountSummary/, accountSummaryAction)
-// settings.action(/closeAccountSummary/, closeAccountSummaryAction)
+export default iscene

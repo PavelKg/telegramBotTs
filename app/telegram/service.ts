@@ -66,8 +66,12 @@ export default class TelegramService {
         console.log('start')
         ctx.scene.enter('start')
       })
+
       mainKeyboard.menuItems.forEach((item) => {
-        bot.hears(item, enter<botContext>(item))
+        const sceneName = /.*\s(.*)/.exec(item)
+        if (Array.isArray(sceneName) && sceneName[1]) {
+          bot.hears(item, enter<botContext>(sceneName[1]))
+        }
       })
 
       // bot.hears('/back', async (ctx) => {

@@ -1,67 +1,37 @@
+// @ts-nocheck
+
 import {Context, Scenes, Markup, Composer} from 'telegraf'
 import {botContext} from '../../types/telebot'
-import {getMainKeyboard, getBackKeyboard} from "../../utils/keyboards"
+import {getMainKeyboard, getBackKeyboard} from '../../utils/keyboards'
 
 const {enter, leave} = Scenes.Stage
+const sceneName = 'profile'
 
-const profileScene = new Scenes.BaseScene<botContext>('profile')
-profileScene.enter((ctx) => {
+const iscene = new Scenes.BaseScene<botContext>(sceneName)
+
+iscene.enter((ctx) => {
   const backKeyboard = getBackKeyboard()
-  ctx.reply('Back', backKeyboard.backKeyboard)
+  const {
+    first_name,
+    username,
+    language_code,
+    role = 'Students',
+    email = 'bestStudent@gmail.com'
+  } = ctx.update.message.from
+
+  const profile = `First name:  <b><i>${first_name}</i></b>
+Username:  <b><i>${username}</i></b>
+Language:  <b><i>${language_code}</i></b>
+Role:  <b><i>${role}</i></b>
+Email:  <b><i>${email}</i></b>`
+  ctx.replyWithHTML(profile, backKeyboard.backKeyboard)
 })
-profileScene.leave((ctx) => {
+iscene.leave((ctx) => {
   const menuKeyboard = getMainKeyboard()
   ctx.reply('Main menu', menuKeyboard.menuKeyboard)
 })
 
-profileScene.command('saveme', leave<botContext>())
-profileScene.hears('back', leave<botContext>())
+iscene.command('saveme', leave<botContext>())
+iscene.hears(/back/, leave<botContext>())
 
-export default profileScene
-
-// // const {
-// //   languageSettingsAction,
-// //   languageChangeAction,
-// //   accountSummaryAction,
-// //   closeAccountSummaryAction
-// // } = require('./actions')
-
-// const {getMainKeyboard, getBackKeyboard} = require('../../utils/keyboards')
-// const {
-//   getMainKeyboard: getSettingsMainKeyboard,
-//   sendMessageToBeDeletedLater
-// } = require('./helpers')
-// const {deleteFromSession} = require('../../utils/session')
-// const {leave} = Stage
-
-// settings.enter(async (ctx) => {
-//   logger.debug(ctx, 'Enters settings scene')
-//   const {backKeyboard} = getBackKeyboard(ctx)
-
-//   deleteFromSession(ctx, 'settingsScene')
-//   await sendMessageToBeDeletedLater(
-//     ctx,
-//     ctx.i18n.t('scenes.settings.what_to_change'),
-//     getSettingsMainKeyboard(ctx)
-//   )
-//   await sendMessageToBeDeletedLater(
-//     ctx,
-//     ctx.i18n.t('scenes.settings.settings'),
-//     backKeyboard
-//   )
-// })
-
-// settings.leave(async (ctx) => {
-//   logger.debug(ctx, 'Leaves settings scene')
-//   const {mainKeyboard} = getMainKeyboard(ctx)
-//   await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard)
-//   deleteFromSession(ctx, 'settingsScene')
-// })
-
-// settings.command('saveme', leave())
-// settings.hears(match('keyboards.back_keyboard.back'), leave())
-
-// settings.action(/languageSettings/, languageSettingsAction)
-// settings.action(/languageChange/, languageChangeAction)
-// settings.action(/accountSummary/, accountSummaryAction)
-// settings.action(/closeAccountSummary/, closeAccountSummaryAction)
+export default iscene

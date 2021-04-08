@@ -18,14 +18,16 @@ function makeKeyboard(buttons: Array<string>): any {
   return Markup.keyboard(buttons)
 }
 
+export const keyBack = '◀️ back'
+
 const getBackKeyboard = (/*ctx: botContext*/) => {
-  const backKeyboardBack = 'back'
-  let backKeyboard = makeKeyboard([backKeyboardBack])
+  
+  let backKeyboard = makeKeyboard([keyBack])
   backKeyboard = backKeyboard.resize().oneTime()
 
   return {
     backKeyboard,
-    backKeyboardBack
+    keyBack
   }
 }
 /**
@@ -36,10 +38,10 @@ const getBackKeyboard = (/*ctx: botContext*/) => {
  */
 
 const getMainKeyboard = (/*ctx*/) => {
-  const coursesKeyboard = 'courses'
-  const profileKeyboard = 'profile'
-  const accomplishmentsKeyboard = 'accomplishments'
-  const notificationsKeyboard = 'notifications'
+  const coursesKeyboard = '✍️ courses'
+  const profileKeyboard = '⚙️ profile'
+  const accomplishmentsKeyboard = '🚀 accomplishments'
+  const notificationsKeyboard = '🔔 notifications'
   const menuKeyboard = makeKeyboard([
     coursesKeyboard,
     profileKeyboard,

@@ -1,70 +1,65 @@
-import {Scenes} from 'telegraf'
+import {Context, Scenes, Markup, Composer} from 'telegraf'
 import {botContext} from '../../types/telebot'
-import {getBackKeyboard, getMainKeyboard} from '../../utils/keyboards'
+import {getMainKeyboard, getBackKeyboard} from '../../utils/keyboards'
+import {courses, Courses} from '../helper'
 
 const {enter, leave} = Scenes.Stage
+const sceneName = 'courses'
 
-const coursesScene = new Scenes.BaseScene<botContext>('courses')
+const iscene = new Scenes.BaseScene<botContext>(sceneName)
 
-coursesScene.enter((ctx) => {
+iscene.enter((ctx) => {
   const backKeyboard = getBackKeyboard()
-  ctx.reply('Back', backKeyboard.backKeyboard)
+  ctx.reply('\u2063', backKeyboard.backKeyboard)
+  ctx.reply(
+    'Select:',
+    Markup.inlineKeyboard([
+      Markup.button.callback('Available courses', 'available_courses'),
+      Markup.button.callback('Complited courses', 'finished_courses'),
+      Markup.button.callback('In Progress', 'current_courses')
+    ])
+  )
 })
-coursesScene.leave((ctx) => {
+
+iscene.action(/available_courses|finished_courses|current_courses/, (ctx) => {
+  const type: string = `${ctx.match[0]}`
+  const list = courses[type as keyof Courses].list
+  const buttons = list.map((btn: any) => {
+    return Markup.button.callback(
+      btn.title,
+      `courses_title_${btn.title.replace(' ', '_')}`
+    )
+  })
+  ctx.reply('List:', Markup.inlineKeyboard(buttons))
+  return ctx.answerCbQuery(`Oh, ${ctx.match[0]}! Great choice`)
+})
+
+iscene.action(/courses_title_/, (ctx) => {
+  const match = /courses_title_(.+)/.exec(ctx.match.input) ?? ['', '']
+  const title = match[1]
+
+  let selCourses
+  Object.keys(courses).forEach((item: any) => {
+    const ind = courses[item as keyof Courses].list.findIndex(
+      (list: any) => list.title.replace(' ', '_') === title
+    )
+
+    if (~ind) {
+      selCourses = courses[item as keyof Courses].list[ind].description
+    }
+  })
+  if (selCourses) {
+    ctx.replyWithHTML(`<b><i>${title}</i></b>${selCourses}`)
+  }
+  return ctx.answerCbQuery(title.replace('_', ' '))
+})
+
+iscene.leave((ctx) => {
   const menuKeyboard = getMainKeyboard()
   ctx.reply('Main menu', menuKeyboard.menuKeyboard)
 })
 
-coursesScene.command('saveme', leave<botContext>())
-coursesScene.hears('back', leave<botContext>())
-//coursesScene.hears('hi', enter<botContext>('start'))
-//coursesScene.on('text', (ctx) => {})
+iscene.command('saveme', leave<botContext>())
+iscene.hears(/back/, leave<botContext>())
 
-export default coursesScene
-
-// // const {
-// //   languageSettingsAction,
-// //   languageChangeAction,
-// //   accountSummaryAction,
-// //   closeAccountSummaryAction
-// // } = require('./actions')
-
-// const {getMainKeyboard, getBackKeyboard} = require('../../utils/keyboards')
-// const {
-//   getMainKeyboard: getSettingsMainKeyboard,
-//   sendMessageToBeDeletedLater
-// } = require('./helpers')
-// const {deleteFromSession} = require('../../utils/session')
-// const {leave} = Stage
-
-// settings.enter(async (ctx) => {
-//   logger.debug(ctx, 'Enters settings scene')
-//   const {backKeyboard} = getBackKeyboard(ctx)
-
-//   deleteFromSession(ctx, 'settingsScene')
-//   await sendMessageToBeDeletedLater(
-//     ctx,
-//     ctx.i18n.t('scenes.settings.what_to_change'),
-//     getSettingsMainKeyboard(ctx)
-//   )
-//   await sendMessageToBeDeletedLater(
-//     ctx,
-//     ctx.i18n.t('scenes.settings.settings'),
-//     backKeyboard
-//   )
-// })
-
-// settings.leave(async (ctx) => {
-//   logger.debug(ctx, 'Leaves settings scene')
-//   const {mainKeyboard} = getMainKeyboard(ctx)
-//   await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard)
-//   deleteFromSession(ctx, 'settingsScene')
-// })
-
-// settings.command('saveme', leave())
-// settings.hears(match('keyboards.back_keyboard.back'), leave())
-
-// settings.action(/languageSettings/, languageSettingsAction)
-// settings.action(/languageChange/, languageChangeAction)
-// settings.action(/accountSummary/, accountSummaryAction)
-// settings.action(/closeAccountSummary/, closeAccountSummaryAction)
+export default iscene
