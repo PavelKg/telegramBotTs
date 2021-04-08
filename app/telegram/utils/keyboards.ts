@@ -1,17 +1,26 @@
-// @ts-nocheck
-import Markup from 'telegraf'
+import {Markup} from 'telegraf'
+import {ReplyKeyboardMarkup} from 'typegram'
 
+import {keyboard} from '../../../node_modules/telegraf/src/markup'
+//./core/types/typegram
+///node_modules/telegraf/typings/index
 
+// interface keyboard {
+//   markup: ReplyKeyboardMarkup
+//   keys: Array<string>
+// }
 //import {botContext} from './types/telebot'
 /**
  * Returns back keyboard and its buttons
  * @param ctx - telegram context
  */
-//@ts-ignore 
+function makeKeyboard(buttons: Array<string>): any {
+  return Markup.keyboard(buttons)
+}
+
 const getBackKeyboard = (/*ctx: botContext*/) => {
   const backKeyboardBack = 'back'
-  let backKeyboard = Markup.keyboard([backKeyboardBack])
-
+  let backKeyboard = makeKeyboard([backKeyboardBack])
   backKeyboard = backKeyboard.resize().oneTime()
 
   return {
@@ -25,13 +34,13 @@ const getBackKeyboard = (/*ctx: botContext*/) => {
  * @param {*} ctx
  * @return {*}
  */
-// @ts-ignore  
+
 const getMainKeyboard = (/*ctx*/) => {
   const coursesKeyboard = 'courses'
   const profileKeyboard = 'profile'
   const accomplishmentsKeyboard = 'accomplishments'
   const notificationsKeyboard = 'notifications'
-  const menuKeyboard = Markup.keyboard([
+  const menuKeyboard = makeKeyboard([
     coursesKeyboard,
     profileKeyboard,
     accomplishmentsKeyboard,
