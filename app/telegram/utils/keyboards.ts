@@ -1,9 +1,13 @@
-import {Telegraf, Context, Markup, Scenes, session} from 'telegraf'
-import {botContext} from './types/telebot'
+// @ts-nocheck
+import Markup from 'telegraf'
+
+
+//import {botContext} from './types/telebot'
 /**
  * Returns back keyboard and its buttons
  * @param ctx - telegram context
  */
+//@ts-ignore 
 const getBackKeyboard = (/*ctx: botContext*/) => {
   const backKeyboardBack = 'back'
   let backKeyboard = Markup.keyboard([backKeyboardBack])
@@ -21,6 +25,7 @@ const getBackKeyboard = (/*ctx: botContext*/) => {
  * @param {*} ctx
  * @return {*}
  */
+// @ts-ignore  
 const getMainKeyboard = (/*ctx*/) => {
   const coursesKeyboard = 'courses'
   const profileKeyboard = 'profile'

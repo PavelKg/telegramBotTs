@@ -86,7 +86,7 @@ export default class TelegramService {
       if (bot) {
         const {chatId, type, contentType, content} = JSON.parse(msg)
         if (contentType === 'pg-list') {
-          const mediaGroup = content.map((item) => {
+          const mediaGroup = content.map((item: string) => {
             return {media: item, caption: 'From file_id', type: 'photo'}
           })
 
