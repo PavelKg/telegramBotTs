@@ -52,14 +52,11 @@ async function getServices(
   req: FastifyRequest,
   reply: FastifyReply
 ) {
-  console.log(Object.keys(req))
-  console.log(Object.keys(reply))
   const info = await this.workerService.getServices()
   reply.code(200).send(info)
 }
 
 async function getPlayer(this: any, req: FastifyRequest, reply: FastifyReply) {
-  console.log('html')
   const html = html_temp
   reply.type('text/html').send(html)
 }
