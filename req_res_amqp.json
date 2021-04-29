@@ -1,0 +1,23 @@
+{
+    "response":{
+        "method":"GET_COURSES_LIST",
+        "params":{
+            "type":"CURRENT"
+        },
+        "headers":{
+            "chat_id":"123456789"
+        }
+    },
+    "request":{
+        "method":"GET_COURSES_LIST <- maybe need to", 
+        "data":{
+            "courses_list":[
+                {}
+            ]
+        },
+        "error":{
+            "code":"404",
+            "message":"NOT FOUND METHOD... IF there is not error, error=null. If there is not data,data"
+        }
+    }
+}
