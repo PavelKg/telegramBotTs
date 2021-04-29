@@ -9,11 +9,18 @@
         }
     },
     "request":{
-        "method":"GET_COURSES_LIST <- maybe need to", 
-        "data":{
-            "courses_list":[
-                {}
-            ]
+        "headers":{
+            "chat_id":"123456789"
+        },
+        "data":{  
+            "method":"GET_COURSES_LIST <- maybe need to",
+            "content":{
+                "courses_list":[
+                    {
+                        "id":"1",
+                        "other_keys":"other_value"}
+                ]
+            }
         },
         "error":{
             "code":"404",
